@@ -21,12 +21,17 @@ def create_superuser(sender, **kwargs):
         }
 
         values = {}
+        missing_vars = []
         for key, env_var in required_vars.items():
             value = os.environ.get(env_var)
             if not value:
-                # Skip if not all vars are set, to avoid errors on every startup
-                return
-            values[key] = value
+                missing_vars.append(env_var)
+            else:
+                values[key] = value
+
+        if missing_vars:
+            print(f'Superuser not created: Missing environment variables: {", ".join(missing_vars)}')
+            return
 
         try:
             User.objects.create_superuser(

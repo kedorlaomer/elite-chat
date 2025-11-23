@@ -27,4 +27,4 @@ python manage.py createsuperuser
 
 # Start Gunicorn
 echo "Starting Gunicorn..."
-exec gunicorn elite_chat.wsgi:application --bind 0.0.0.0:8000
+exec gunicorn elite_chat.wsgi:application

@@ -29,4 +29,7 @@ urlpatterns = [
     path('set_password/', set_password, name='set_password'),
     path('dashboard/', dashboard, name='dashboard'),
     path('room/<int:room_id>/', room, name='room'),
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

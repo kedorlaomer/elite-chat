@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}Elite Chat - Dashboard{% endblock %}
+
+{% block extra_head %}
+<style>
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .container h2 {
+        color: #333;
+    }
+    .room-list {
+        list-style: none;
+        padding: 0;
+    }
+    .room-list li {
+        margin-bottom: 10px;
+    }
+    .room-list a {
+        display: block;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        text-decoration: none;
+        color: #007bff;
+        transition: background-color 0.3s;
+    }
+    .room-list a:hover {
+        background-color: #e9ecef;
+    }
+    .no-rooms {
+        text-align: center;
+        color: #666;
+        font-style: italic;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>{% trans "Welcome" %}, {{ user.username }}!</h2>
+    <h3>{% trans "Your Forums" %}</h3>
+    {% if rooms %}
+        <ul class="room-list">
+            {% for room in rooms %}
+                <li><a href="{% url 'room' room.id %}">{{ room.name }}</a></li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="no-rooms">{% trans "There are no forums yet." %}</p>
+    {% endif %}
+</div>
+{% endblock %}

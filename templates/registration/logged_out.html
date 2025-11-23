@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Logged Out" %} - Elite Chat{% endblock %}
+
+{% block extra_head %}
+<style>
+    .logout-container {
+        background-color: white;
+        padding: 40px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+        margin: 0 auto;
+    }
+    .logout-container h1 {
+        color: #333;
+        margin-bottom: 20px;
+    }
+    .logout-container a {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #28a745;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+    }
+    .logout-container a:hover {
+        background-color: #218838;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="logout-container">
+    <h1>{% trans "You have been logged out." %}</h1>
+    <a href="{% url 'login' %}">{% trans "Login again" %}</a>
+</div>
+{% endblock %}

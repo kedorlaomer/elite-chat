@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{{ room.name }} - Elite Chat{% endblock %}
+
+{% block extra_head %}
+<style>
+    .room-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .room-header {
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+    .room-header h2 {
+        color: #333;
+        margin: 0;
+    }
+    .room-description {
+        color: #666;
+        margin: 5px 0 0 0;
+    }
+    .messages {
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 10px;
+        margin-bottom: 20px;
+        background-color: #f9f9f9;
+    }
+    .message {
+        margin-bottom: 10px;
+        display: flex;
+    }
+    .message.own {
+        justify-content: flex-end;
+    }
+    .message.other {
+        justify-content: flex-start;
+    }
+    .message-bubble {
+        max-width: 70%;
+        padding: 10px;
+        border-radius: 10px;
+        position: relative;
+    }
+    .message.own .message-bubble {
+        background-color: #007bff;
+        color: white;
+    }
+    .message.other .message-bubble {
+        background-color: #e9ecef;
+        color: #333;
+    }
+    .message.unapproved {
+        opacity: 0.7;
+    }
+    .pending {
+        font-style: italic;
+        font-size: 0.8em;
+        color: #ff6b6b;
+    }
+    .message-author {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .message-time {
+        font-size: 0.8em;
+        opacity: 0.7;
+    }
+    .message-form {
+        display: flex;
+        gap: 10px;
+    }
+    .message-form textarea {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        resize: vertical;
+        min-height: 40px;
+    }
+    .message-form button {
+        padding: 10px 20px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .message-form button:hover {
+        background-color: #218838;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="room-container">
+    <div class="room-header">
+        <h2>{{ room.name }}</h2>
+        <p class="room-description">{{ room.description }}</p>
+    </div>
+    <div class="messages" id="messages">
+        {% for message in messages %}
+            <div class="message {% if message.author == user %}own{% else %}other{% endif %} {% if not message.approved and message.author == user %}unapproved{% endif %}">
+                <div class="message-bubble">
+                    <div class="message-author">{{ message.author.username }}</div>
+                    <div>{{ message.content }}</div>
+                    <div class="message-time">{{ message.created_at|date:"H:i" }}</div>
+                    {% if not message.approved and message.author == user %}<div class="pending">{% trans "(pending approval)" %}</div>{% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    <form method="post" class="message-form">
+        {% csrf_token %}
+        <textarea name="content" placeholder="{% trans 'Type your message...' %}" title="{% trans 'Press Ctrl+Enter to send' %}"></textarea>
+        <button type="submit">{% trans "Send" %}</button>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const textarea = document.querySelector('textarea[name="content"]');
+        const form = document.querySelector('.message-form');
+
+        textarea.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                form.submit();
+            }
+        });
+
+        // Scroll to bottom of messages
+        const messages = document.getElementById('messages');
+        messages.scrollTop = messages.scrollHeight;
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Profile" %} - Elite Chat{% endblock %}
+
+{% block extra_head %}
+<style>
+    .profile-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .profile-container h2 {
+        color: #333;
+        text-align: center;
+    }
+    .profile-info {
+        margin-top: 20px;
+    }
+    .profile-info p {
+        margin-bottom: 10px;
+        color: #555;
+    }
+    .profile-info strong {
+        color: #333;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <h2>Your Profile</h2>
+    <div class="profile-info">
+        <p><strong>{% trans "Username:" %}</strong> {{ user.username }}</p>
+        <p><strong>{% trans "Email:" %}</strong> {% if user.email %}{{ user.email }}{% else %}{% trans "Not provided" %}{% endif %}</p>
+        <p><strong>{% trans "Date Joined:" %}</strong> {{ user.date_joined|date:"F j, Y" }}</p>
+        <!-- Add more profile fields as needed -->
+    </div>
+</div>
+{% endblock %}

@@ -6,6 +6,9 @@
 
 set -e  # Exit on any error
 
+# Install system dependencies for psycopg compilation
+apt-get update && apt-get install -y libpq-dev build-essential
+
 # Check required environment variables
 if [ -z "$DJANGO_SUPERUSER_USERNAME" ] || [ -z "$DJANGO_SUPERUSER_EMAIL" ] || [ -z "$DJANGO_SUPERUSER_PASSWORD" ]; then
     echo "Error: Required environment variables not set:"

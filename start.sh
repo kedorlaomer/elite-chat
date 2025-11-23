@@ -21,6 +21,10 @@ echo "Starting Elite Chat..."
 echo "Running migrations..."
 python manage.py migrate
 
+# Collect static files
+echo "Collecting static files..."
+python manage.py collectstatic --noinput
+
 # Create superuser if it doesn't exist
 echo "Creating superuser..."
 python manage.py createsuperuser

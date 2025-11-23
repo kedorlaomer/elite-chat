@@ -7,7 +7,7 @@
 set -e  # Exit on any error
 
 # Activate virtual environment
-source venv/bin/activate
+. venv/bin/activate
 
 # Check required environment variables
 if [ -z "$DJANGO_SUPERUSER_USERNAME" ] || [ -z "$DJANGO_SUPERUSER_EMAIL" ] || [ -z "$DJANGO_SUPERUSER_PASSWORD" ]; then

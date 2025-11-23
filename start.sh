@@ -1,15 +1,19 @@
 #!/bin/bash
 
 # Entrypoint script for Elite Chat
-# Sets default environment variables if not provided
+# Requires environment variables for superuser creation
 # Runs migrations, creates superuser, and starts Gunicorn
 
 set -e  # Exit on any error
 
-# Set default superuser credentials if not provided
-export DJANGO_SUPERUSER_USERNAME=${DJANGO_SUPERUSER_USERNAME:-admin}
-export DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL:-admin@example.com}
-export DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD:-password}
+# Check required environment variables
+if [ -z "$DJANGO_SUPERUSER_USERNAME" ] || [ -z "$DJANGO_SUPERUSER_EMAIL" ] || [ -z "$DJANGO_SUPERUSER_PASSWORD" ]; then
+    echo "Error: Required environment variables not set:"
+    echo "  DJANGO_SUPERUSER_USERNAME"
+    echo "  DJANGO_SUPERUSER_EMAIL"
+    echo "  DJANGO_SUPERUSER_PASSWORD"
+    exit 1
+fi
 
 echo "Starting Elite Chat..."
 

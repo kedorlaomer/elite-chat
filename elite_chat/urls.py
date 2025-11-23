@@ -16,6 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 from chat.views import set_password, CustomLoginView, dashboard, home, profile, room
 
 urlpatterns = [
@@ -27,4 +29,4 @@ urlpatterns = [
     path('set_password/', set_password, name='set_password'),
     path('dashboard/', dashboard, name='dashboard'),
     path('room/<int:room_id>/', room, name='room'),
-]
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

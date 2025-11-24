@@ -54,9 +54,12 @@ def room(request, room_id):
     room = get_object_or_404(Room, id=room_id)
     if not room.members.filter(id=request.user.id).exists():
         return redirect('dashboard')  # or error message
-    messages = room.message_set.filter(
-        Q(approved=True) | Q(author=request.user)
-    ).order_by('created_at')
+    if request.user.is_staff:
+        messages = room.message_set.all().order_by('created_at')
+    else:
+        messages = room.message_set.filter(
+            Q(approved=True) | Q(author=request.user)
+        ).order_by('created_at')
     print(f"User {request.user} (staff: {request.user.is_staff}) sees messages: {[f'{m.id} by {m.author} approved {m.approved}' for m in messages]}")
     form = MessageForm()
     if request.method == 'POST':

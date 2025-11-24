@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'ckeditor',
+    'django_ckeditor_5',
     'chat',
 ]
 
@@ -126,9 +126,9 @@ STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-CKEDITOR_CONFIGS = {
+CKEDITOR_5_CONFIGS = {
     'default': {
-        'toolbar': 'Basic',
+        'toolbar': ['bold', 'italic', 'underline', 'link'],
         'height': 100,
         'width': '100%',
     },

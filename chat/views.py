@@ -76,7 +76,6 @@ def room(request, room_id):
                         image.save()
                     except Image.DoesNotExist:
                         pass
-                print("room: done to associate images")
         return redirect('room', room_id=room.id)
     return render(request, 'room.html', {'room': room, 'messages': messages, 'form': form})
 

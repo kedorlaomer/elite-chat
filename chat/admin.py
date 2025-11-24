@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from django.utils.html import format_html
-from .models import Room, Message, Membership, Profile, Image
+from .models import Room, Message, Membership, Profile, Image, UnapprovedMessage
 
 def approve_messages(modeladmin, request, queryset):
     updated = queryset.update(approved=True)
@@ -61,7 +61,12 @@ class ImageAdmin(admin.ModelAdmin):
 admin.site.register(Message, MessageAdmin)
 admin.site.register(Membership)
 admin.site.register(Profile)
+class UnapprovedMessageAdmin(MessageAdmin):
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(approved=False)
+
 admin.site.register(Image, ImageAdmin)
+admin.site.register(UnapprovedMessage, UnapprovedMessageAdmin)
 
 # Unregister the default User admin and register the custom one
 admin.site.unregister(User)

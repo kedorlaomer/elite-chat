@@ -99,7 +99,7 @@ def upload_image(request):
             filename=file.name,
             content_type=file.content_type
         )
-        url = request.build_absolute_uri(f'/image/{image.id}/')
+        url = f'/image/{image.id}/'
         return JsonResponse({'url': url})
     return JsonResponse({'error': 'Invalid request'}, status=400)
 

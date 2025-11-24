@@ -5,7 +5,6 @@
 {% block title %}{{ room.name }} - Elite Chat{% endblock %}
 
 {% block extra_head %}
-<script src="{% static 'ckeditor5/ckeditor-super.js' %}"></script>
 <style>
     .room-container {
         max-width: 800px;
@@ -81,7 +80,7 @@
         display: flex;
         gap: 10px;
     }
-    .message-form textarea {
+    .message-form .django_ckeditor_5 {
         flex: 1;
         padding: 10px;
         border: 1px solid #ddd;
@@ -141,31 +140,15 @@
         {% endfor %}
     </div>
     <form method="post" class="message-form">
+        {{ form.media }}
         {% csrf_token %}
-        <textarea id="id_content" name="content" placeholder="{% trans 'Type your message...' %}" title="{% trans 'Press Ctrl+Enter to send' %}"></textarea>
+        {{ form.as_p }}
         <button type="submit">{% trans "Send" %}</button>
     </form>
 </div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        ClassicEditor
-            .create( document.querySelector( '#id_content' ), {
-                toolbar: {
-                    items: [ 'heading', '|', 'bold', 'italic', 'underline', '|', 'link', 'imageUpload', 'bulletedList', 'numberedList', 'blockQuote', 'codeBlock', 'insertTable', '|', 'undo', 'redo' ]
-                },
-                simpleUpload: {
-                    uploadUrl: '/upload_image/',
-                },
-                height: 300,
-                width: '100%',
-            } )
-            .catch( error => {
-                console.error( error );
-            } );
-
-        const form = document.querySelector('.message-form');
-
         // Scroll to bottom of messages
         const messages = document.getElementById('messages');
         messages.scrollTop = messages.scrollHeight;

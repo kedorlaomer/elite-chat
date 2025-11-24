@@ -7,6 +7,7 @@ from django.db import models
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import Profile, Room, Message, Image
+from .forms import MessageForm
 
 # Create your views here.
 
@@ -51,24 +52,27 @@ def room(request, room_id):
     messages = room.message_set.filter(
         models.Q(approved=True) | models.Q(author=request.user)
     ).order_by('created_at')
+    form = MessageForm()
     if request.method == 'POST':
-        content = request.POST.get('content')
-        if content:
-            profile = Profile.objects.get_or_create(user=request.user)[0]
-            approved = profile.auto_approve
-            message = Message.objects.create(room=room, author=request.user, content=content, approved=approved)
-            # Associate images
-            import re
-            image_ids = re.findall(r'/image/(\d+)/', content)
-            for image_id in image_ids:
-                try:
-                    image = Image.objects.get(id=image_id, message__isnull=True)
-                    image.message = message
-                    image.save()
-                except Image.DoesNotExist:
-                    pass
+        form = MessageForm(request.POST)
+        if form.is_valid():
+            content = form.cleaned_data['content']
+            if content:
+                profile = Profile.objects.get_or_create(user=request.user)[0]
+                approved = profile.auto_approve
+                message = Message.objects.create(room=room, author=request.user, content=content, approved=approved)
+                # Associate images
+                import re
+                image_ids = re.findall(r'/image/(\d+)/', content)
+                for image_id in image_ids:
+                    try:
+                        image = Image.objects.get(id=image_id, message__isnull=True)
+                        image.message = message
+                        image.save()
+                    except Image.DoesNotExist:
+                        pass
         return redirect('room', room_id=room.id)
-    return render(request, 'room.html', {'room': room, 'messages': messages})
+    return render(request, 'room.html', {'room': room, 'messages': messages, 'form': form})
 
 def home(request):
     if request.user.is_authenticated:

@@ -131,6 +131,19 @@
     .delete-btn:hover {
         color: #c82333;
     }
+    .approve-btn {
+        background: none;
+        border: none;
+        color: #28a745;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        padding: 0;
+        margin-left: 10px;
+    }
+    .approve-btn:hover {
+        color: #218838;
+    }
 </style>
 {% endblock %}
 
@@ -151,6 +164,12 @@
                         <form method="post" action="{% url 'delete_message' message.id %}" style="display:inline;">
                             {% csrf_token %}
                             <button type="submit" class="delete-btn" title="Delete message">×</button>
+                        </form>
+                    {% endif %}
+                    {% if not message.approved and user.is_staff %}
+                        <form method="post" action="{% url 'approve_message' message.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="approve-btn" title="Approve message">+</button>
                         </form>
                     {% endif %}
                     {% if not message.approved and message.author == user %}<div class="pending">{% trans "(pending approval)" %}</div>{% endif %}

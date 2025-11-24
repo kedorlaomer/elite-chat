@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from chat.views import set_password, CustomLoginView, dashboard, home, profile, room, upload_image, serve_image, delete_message
+from chat.views import set_password, CustomLoginView, dashboard, home, profile, room, upload_image, serve_image, delete_message, approve_message
 
 urlpatterns = [
     path('', home, name='home'),
@@ -30,6 +30,7 @@ urlpatterns = [
     path('dashboard/', dashboard, name='dashboard'),
     path('room/<int:room_id>/', room, name='room'),
     path('message/<int:message_id>/delete/', delete_message, name='delete_message'),
+    path('message/<int:message_id>/approve/', approve_message, name='approve_message'),
     path('upload_image/', upload_image, name='upload_image'),
     path('image/<int:image_id>/', serve_image, name='serve_image'),
     path('ckeditor5/image_upload/', upload_image, name='ckeditor_upload'),

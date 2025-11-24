@@ -120,3 +120,12 @@ def delete_message(request, message_id):
     if message.author == request.user or request.user.is_staff:
         message.delete()
     return redirect('room', room_id=message.room.id)
+
+@require_POST
+@login_required
+def approve_message(request, message_id):
+    message = get_object_or_404(Message, id=message_id)
+    if request.user.is_staff:
+        message.approved = True
+        message.save()
+    return redirect('room', room_id=message.room.id)

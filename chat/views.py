@@ -52,7 +52,9 @@ def room(request, room_id):
     if request.method == 'POST':
         content = request.POST.get('content')
         if content:
-            Message.objects.create(room=room, author=request.user, content=content, approved=False)
+            profile = Profile.objects.get_or_create(user=request.user)[0]
+            approved = profile.auto_approve
+            Message.objects.create(room=room, author=request.user, content=content, approved=approved)
         return redirect('room', room_id=room.id)
     return render(request, 'room.html', {'room': room, 'messages': messages})
 

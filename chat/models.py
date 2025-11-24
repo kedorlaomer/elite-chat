@@ -7,6 +7,7 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     password_set = models.BooleanField(default=False)
     last_interaction = models.DateTimeField(null=True, blank=True)
+    auto_approve = models.BooleanField(default=False)
 
     def __str__(self):
         return f'{self.user.username} Profile'

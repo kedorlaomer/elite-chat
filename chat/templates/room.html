@@ -4,6 +4,7 @@
 {% block title %}{{ room.name }} - Elite Chat{% endblock %}
 
 {% block extra_head %}
+<script src="{% static 'ckeditor/ckeditor/ckeditor.js' %}"></script>
 <style>
     .room-container {
         max-width: 800px;
@@ -121,22 +122,20 @@
     </div>
     <form method="post" class="message-form">
         {% csrf_token %}
-        <textarea name="content" placeholder="{% trans 'Type your message...' %}" title="{% trans 'Press Ctrl+Enter to send' %}"></textarea>
+        <textarea id="id_content" name="content" placeholder="{% trans 'Type your message...' %}" title="{% trans 'Press Ctrl+Enter to send' %}"></textarea>
         <button type="submit">{% trans "Send" %}</button>
     </form>
 </div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const textarea = document.querySelector('textarea[name="content"]');
-        const form = document.querySelector('.message-form');
-
-        textarea.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && e.key === 'Enter') {
-                e.preventDefault();
-                form.submit();
-            }
+        CKEDITOR.replace('id_content', {
+            toolbar: 'Basic',
+            height: 100,
+            width: '100%',
         });
+
+        const form = document.querySelector('.message-form');
 
         // Scroll to bottom of messages
         const messages = document.getElementById('messages');

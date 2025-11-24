@@ -120,7 +120,7 @@
             <div class="message {% if message.author == user %}own{% else %}other{% endif %} {% if not message.approved and message.author == user %}unapproved{% endif %}">
                 <div class="message-bubble">
                     <div class="message-author">{{ message.author.username }}</div>
-                    <div>{{ message.content }}</div>
+                     <div>{{ message.content|safe }}</div>
                     <div class="message-time">{{ message.created_at|date:"H:i" }}</div>
                     {% if not message.approved and message.author == user %}<div class="pending">{% trans "(pending approval)" %}</div>{% endif %}
                 </div>

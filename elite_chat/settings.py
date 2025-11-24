@@ -143,6 +143,20 @@ CKEDITOR_5_CONFIGS = {
         'height': 300,
         'width': '100%',
     },
+    'message': {
+        'toolbar': ['heading', '|', 'bold', 'italic', 'underline', '|', 'link', 'imageUpload', 'bulletedList', 'numberedList', 'blockQuote', 'insertTable', '|', 'undo', 'redo'],
+        'image': {
+            'toolbar': ['imageTextAlternative', 'imageStyle:inline', 'imageStyle:block', 'imageStyle:side'],
+        },
+        'table': {
+            'contentToolbar': ['tableColumn', 'tableRow', 'mergeTableCells'],
+        },
+        'simpleUpload': {
+            'uploadUrl': '/upload_image/',
+        },
+        'height': 300,
+        'width': '100%',
+    },
 }
 
 LOCALE_PATHS = [BASE_DIR / 'locale']

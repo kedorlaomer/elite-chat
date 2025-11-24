@@ -32,9 +32,6 @@ class MessageAdmin(admin.ModelAdmin):
     search_fields = ('content', 'author__username')
     ordering = ['-created_at']
 
-    def get_queryset(self, request):
-        return super().get_queryset(request).filter(approved=False)
-
     def room_info(self, obj):
         return f"{obj.room.name}: {obj.room.description}"
     room_info.short_description = 'Room'

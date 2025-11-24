@@ -1,4 +1,3 @@
-import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import SetPasswordForm
@@ -11,8 +10,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from .models import Profile, Room, Message, Image
 from .forms import MessageForm
-
-logger = logging.getLogger(__name__)
 
 # Create your views here.
 
@@ -60,7 +57,6 @@ def room(request, room_id):
         messages = room.message_set.filter(
             Q(approved=True) | Q(author=request.user)
         ).order_by('created_at')
-    print(f"User {request.user} (staff: {request.user.is_staff}) sees messages: {[f'{m.id} by {m.author} approved {m.approved}' for m in messages]}")
     form = MessageForm()
     if request.method == 'POST':
         form = MessageForm(request.POST)
@@ -93,10 +89,8 @@ def home(request):
 
 @csrf_exempt
 def upload_image(request):
-    print("upload_image called with method:", request.method)
     if request.method == 'POST' and request.FILES.get('upload'):
         file = request.FILES['upload']
-        print("Uploading file:", file.name, "size:", file.size)
         data = b''
         for chunk in file.chunks():
             data += chunk
@@ -105,17 +99,12 @@ def upload_image(request):
             filename=file.name,
             content_type=file.content_type
         )
-        print("Image created with id:", image.id)
         url = request.build_absolute_uri(f'/image/{image.id}/')
-        print("Returning URL:", url)
         return JsonResponse({'url': url})
-    print("Invalid request to upload_image")
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 def serve_image(request, image_id):
-    logger.info("serve_image called for id: %s", image_id)
     image = get_object_or_404(Image, id=image_id)
-    logger.info("Serving image: %s, size: %s", image.filename, len(image.data))
     return HttpResponse(image.data, content_type=image.content_type)
 
 @require_POST

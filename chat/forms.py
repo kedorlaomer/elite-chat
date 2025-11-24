@@ -5,7 +5,7 @@ class MessageForm(forms.Form):
     content = forms.CharField(
         widget=CKEditor5Widget(
             attrs={"class": "django_ckeditor_5"},
-            config_name='extends'
+            config_name='default'
         ),
         label='',
         required=False

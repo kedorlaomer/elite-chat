@@ -129,8 +129,17 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 CKEDITOR_5_CONFIGS = {
     'default': {
-        'toolbar': ['bold', 'italic', 'underline', 'link'],
-        'height': 100,
+        'toolbar': ['heading', '|', 'bold', 'italic', 'underline', '|', 'link', 'imageUpload', 'bulletedList', 'numberedList', 'blockQuote', 'insertTable', '|', 'undo', 'redo'],
+        'image': {
+            'toolbar': ['imageTextAlternative', 'imageStyle:inline', 'imageStyle:block', 'imageStyle:side'],
+        },
+        'table': {
+            'contentToolbar': ['tableColumn', 'tableRow', 'mergeTableCells'],
+        },
+        'simpleUpload': {
+            'uploadUrl': '/upload_image/',
+        },
+        'height': 300,
         'width': '100%',
     },
 }

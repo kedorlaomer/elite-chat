@@ -151,25 +151,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         ClassicEditor
             .create( document.querySelector( '#id_content' ), {
-                toolbar: [ 'heading', '|', 'bold', 'italic', 'underline', 'fontColor', 'fontBackgroundColor', '|', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'codeBlock', 'insertTable', '|', 'undo', 'redo' ],
-                fontColor: {
-                    colors: [
-                        { color: 'black', label: 'Black' },
-                        { color: 'red', label: 'Red' },
-                        { color: 'blue', label: 'Blue' },
-                        { color: 'green', label: 'Green' },
-                        { color: 'yellow', label: 'Yellow' },
-                    ]
-                },
-                fontBackgroundColor: {
-                    colors: [
-                        { color: 'transparent', label: 'None' },
-                        { color: 'yellow', label: 'Yellow' },
-                        { color: 'lightgreen', label: 'Light green' },
-                        { color: 'lightblue', label: 'Light blue' },
-                        { color: 'pink', label: 'Pink' },
-                    ]
-                },
+                toolbar: [ 'heading', '|', 'bold', 'italic', 'underline', '|', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'codeBlock', 'insertTable', '|', 'undo', 'redo' ],
                 height: 300,
                 width: '100%',
             } )

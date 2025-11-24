@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
-from .models import Room, Message, Membership, Profile
+from django.utils.html import format_html
+from .models import Room, Message, Membership, Profile, Image
 
 def approve_messages(modeladmin, request, queryset):
     updated = queryset.update(approved=True)
@@ -51,9 +52,19 @@ class MessageAdmin(admin.ModelAdmin):
         ])
     previous_messages.short_description = 'Previous Messages (last 5)'
 
+class ImageAdmin(admin.ModelAdmin):
+    list_display = ('id', 'message', 'filename', 'content_type', 'image_preview')
+    list_filter = ('content_type',)
+    search_fields = ('filename',)
+
+    def image_preview(self, obj):
+        return format_html('<img src="/image/{}/" width="100" height="100" style="object-fit: cover;" />', obj.id)
+    image_preview.short_description = 'Preview'
+
 admin.site.register(Message, MessageAdmin)
 admin.site.register(Membership)
 admin.site.register(Profile)
+admin.site.register(Image, ImageAdmin)
 
 # Unregister the default User admin and register the custom one
 admin.site.unregister(User)

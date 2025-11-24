@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.db import models
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from .models import Profile, Room, Message, Image
 from .forms import MessageForm
 
@@ -87,10 +88,10 @@ def home(request):
 
 @csrf_exempt
 def upload_image(request):
-    logger.info("upload_image called with method: %s", request.method)
+    print("upload_image called with method:", request.method)
     if request.method == 'POST' and request.FILES.get('upload'):
         file = request.FILES['upload']
-        logger.info("Uploading file: %s, size: %s", file.name, file.size)
+        print("Uploading file:", file.name, "size:", file.size)
         data = b''
         for chunk in file.chunks():
             data += chunk
@@ -99,11 +100,11 @@ def upload_image(request):
             filename=file.name,
             content_type=file.content_type
         )
-        logger.info("Image created with id: %s", image.id)
+        print("Image created with id:", image.id)
         url = request.build_absolute_uri(f'/image/{image.id}/')
-        logger.info("Returning URL: %s", url)
+        print("Returning URL:", url)
         return JsonResponse({'url': url})
-    logger.warning("Invalid request to upload_image")
+    print("Invalid request to upload_image")
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 def serve_image(request, image_id):
@@ -111,3 +112,11 @@ def serve_image(request, image_id):
     image = get_object_or_404(Image, id=image_id)
     logger.info("Serving image: %s, size: %s", image.filename, len(image.data))
     return HttpResponse(image.data, content_type=image.content_type)
+
+@require_POST
+@login_required
+def delete_message(request, message_id):
+    message = get_object_or_404(Message, id=message_id)
+    if message.author == request.user or request.user.is_staff:
+        message.delete()
+    return redirect('room', room_id=message.room.id)

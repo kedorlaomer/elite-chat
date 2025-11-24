@@ -120,8 +120,6 @@ msgid "You have been logged out."
 msgstr "Du wurdest abgemeldet."
 
 #: templates/registration/logged_out.html:40
-#, fuzzy
-#| msgid "Login"
 msgid "Login again"
 msgstr "Anmelden"
 

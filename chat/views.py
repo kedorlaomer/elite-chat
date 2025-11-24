@@ -57,6 +57,7 @@ def room(request, room_id):
     messages = room.message_set.filter(
         Q(approved=True) | Q(author=request.user)
     ).order_by('created_at')
+    print(f"User {request.user} (staff: {request.user.is_staff}) sees messages: {[f'{m.id} by {m.author} approved {m.approved}' for m in messages]}")
     form = MessageForm()
     if request.method == 'POST':
         form = MessageForm(request.POST)

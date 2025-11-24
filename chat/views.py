@@ -1,3 +1,4 @@
+import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import SetPasswordForm
@@ -8,6 +9,8 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import Profile, Room, Message, Image
 from .forms import MessageForm
+
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 
@@ -61,16 +64,19 @@ def room(request, room_id):
                 profile = Profile.objects.get_or_create(user=request.user)[0]
                 approved = profile.auto_approve
                 message = Message.objects.create(room=room, author=request.user, content=content, approved=approved)
+                logger.info("Message created with id: %s", message.id)
                 # Associate images
                 import re
                 image_ids = re.findall(r'/image/(\d+)/', content)
+                logger.info("Found image IDs in content: %s", image_ids)
                 for image_id in image_ids:
                     try:
                         image = Image.objects.get(id=image_id, message__isnull=True)
                         image.message = message
                         image.save()
+                        logger.info("Associated image %s with message %s", image_id, message.id)
                     except Image.DoesNotExist:
-                        pass
+                        logger.warning("Image %s not found or already associated", image_id)
         return redirect('room', room_id=room.id)
     return render(request, 'room.html', {'room': room, 'messages': messages, 'form': form})
 
@@ -81,8 +87,10 @@ def home(request):
 
 @csrf_exempt
 def upload_image(request):
+    logger.info("upload_image called with method: %s", request.method)
     if request.method == 'POST' and request.FILES.get('upload'):
         file = request.FILES['upload']
+        logger.info("Uploading file: %s, size: %s", file.name, file.size)
         data = b''
         for chunk in file.chunks():
             data += chunk
@@ -91,10 +99,15 @@ def upload_image(request):
             filename=file.name,
             content_type=file.content_type
         )
+        logger.info("Image created with id: %s", image.id)
         url = request.build_absolute_uri(f'/image/{image.id}/')
+        logger.info("Returning URL: %s", url)
         return JsonResponse({'url': url})
+    logger.warning("Invalid request to upload_image")
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 def serve_image(request, image_id):
+    logger.info("serve_image called for id: %s", image_id)
     image = get_object_or_404(Image, id=image_id)
+    logger.info("Serving image: %s, size: %s", image.filename, len(image.data))
     return HttpResponse(image.data, content_type=image.content_type)

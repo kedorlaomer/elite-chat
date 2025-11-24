@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from chat.views import set_password, CustomLoginView, dashboard, home, profile, room, upload_image
+from chat.views import set_password, CustomLoginView, dashboard, home, profile, room, upload_image, serve_image
 
 urlpatterns = [
     path('', home, name='home'),
@@ -30,6 +30,7 @@ urlpatterns = [
     path('dashboard/', dashboard, name='dashboard'),
     path('room/<int:room_id>/', room, name='room'),
     path('upload_image/', upload_image, name='upload_image'),
+    path('image/<int:image_id>/', serve_image, name='serve_image'),
 ]
 
 if settings.DEBUG:

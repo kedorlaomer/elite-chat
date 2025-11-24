@@ -4,9 +4,9 @@ from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.views import LoginView
 from django.contrib import messages
 from django.db import models
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import Profile, Room, Message
+from .models import Profile, Room, Message, Image
 
 # Create your views here.
 
@@ -56,7 +56,17 @@ def room(request, room_id):
         if content:
             profile = Profile.objects.get_or_create(user=request.user)[0]
             approved = profile.auto_approve
-            Message.objects.create(room=room, author=request.user, content=content, approved=approved)
+            message = Message.objects.create(room=room, author=request.user, content=content, approved=approved)
+            # Associate images
+            import re
+            image_ids = re.findall(r'/image/(\d+)/', content)
+            for image_id in image_ids:
+                try:
+                    image = Image.objects.get(id=image_id, message__isnull=True)
+                    image.message = message
+                    image.save()
+                except Image.DoesNotExist:
+                    pass
         return redirect('room', room_id=room.id)
     return render(request, 'room.html', {'room': room, 'messages': messages})
 
@@ -69,13 +79,18 @@ def home(request):
 def upload_image(request):
     if request.method == 'POST' and request.FILES.get('upload'):
         file = request.FILES['upload']
-        # Create images directory if not exists
-        import os
-        os.makedirs('static/images', exist_ok=True)
-        path = f'static/images/{file.name}'
-        with open(path, 'wb') as f:
-            for chunk in file.chunks():
-                f.write(chunk)
-        url = request.build_absolute_uri(f'/static/images/{file.name}')
+        data = b''
+        for chunk in file.chunks():
+            data += chunk
+        image = Image.objects.create(
+            data=data,
+            filename=file.name,
+            content_type=file.content_type
+        )
+        url = request.build_absolute_uri(f'/image/{image.id}/')
         return JsonResponse({'url': url})
     return JsonResponse({'error': 'Invalid request'}, status=400)
+
+def serve_image(request, image_id):
+    image = get_object_or_404(Image, id=image_id)
+    return HttpResponse(image.data, content_type=image.content_type)

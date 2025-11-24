@@ -41,3 +41,9 @@ class Message(models.Model):
 
     def __str__(self):
         return f'{self.author.username}: {self.content[:50]}'
+
+class Image(models.Model):
+    message = models.ForeignKey(Message, on_delete=models.CASCADE, null=True, blank=True)
+    data = models.BinaryField()
+    filename = models.CharField(max_length=255)
+    content_type = models.CharField(max_length=100)

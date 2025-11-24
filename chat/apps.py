@@ -1,5 +1,8 @@
+import logging
 from django.apps import AppConfig
 from django.db.models.signals import post_save, post_migrate
+
+logger = logging.getLogger(__name__)
 
 
 def create_profile(sender, instance, created, **kwargs):
@@ -30,6 +33,7 @@ def create_superuser(sender, **kwargs):
                 values[key] = value
 
         if missing_vars:
+            logger.warning(f'Superuser not created: Missing environment variables: {", ".join(missing_vars)}')
             return
 
         try:
@@ -38,8 +42,9 @@ def create_superuser(sender, **kwargs):
                 email=values['email'],
                 password=values['password']
             )
+            logger.info(f'Superuser created: {values["username"]}')
         except Exception as e:
-            pass
+            logger.error(f'Error creating superuser: {e}')
 
 
 class ChatConfig(AppConfig):

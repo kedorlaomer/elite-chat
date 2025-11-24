@@ -167,7 +167,7 @@
                         </form>
                     {% endif %}
                     {% if not message.approved and user.is_staff %}
-                        <form method="post" action="{% url 'approve_message' message.id %}" style="display:inline;">
+                        <form method="post" action="{% url 'approve_message' message.id %}" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%);">
                             {% csrf_token %}
                             <button type="submit" class="approve-btn" title="Approve message">+</button>
                         </form>

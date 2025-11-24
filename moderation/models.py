@@ -4,5 +4,12 @@ class UnapprovedMessage(Message):
     class Meta:
         proxy = True
         app_label = 'moderation'
-        verbose_name = 'Message'
-        verbose_name_plural = 'Messages'
+        verbose_name = 'Unapproved Message'
+        verbose_name_plural = 'Unapproved Messages'
+
+class AllMessage(Message):
+    class Meta:
+        proxy = True
+        app_label = 'moderation'
+        verbose_name = 'All Message'
+        verbose_name_plural = 'All Messages'

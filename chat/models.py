@@ -47,9 +47,3 @@ class Image(models.Model):
     data = models.BinaryField()
     filename = models.CharField(max_length=255)
     content_type = models.CharField(max_length=100)
-
-class UnapprovedMessage(Message):
-    class Meta:
-        proxy = True
-        verbose_name = 'Moderation'
-        verbose_name_plural = 'Moderation'

@@ -31,7 +31,7 @@ urlpatterns = [
     path('room/<int:room_id>/', room, name='room'),
     path('upload_image/', upload_image, name='upload_image'),
     path('image/<int:image_id>/', serve_image, name='serve_image'),
-    path('ckeditor5/upload/', upload_image, name='ckeditor_upload'),
+    path('ckeditor5/image_upload/', upload_image, name='ckeditor_upload'),
     path('ckeditor5/', include('django_ckeditor_5.urls')),
 ]
 

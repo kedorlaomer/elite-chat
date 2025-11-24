@@ -32,7 +32,7 @@
 
 {% block content %}
 <div class="profile-container">
-    <h2>Your Profile</h2>
+    <h2>{% trans "Your Profile" %}</h2>
     <div class="profile-info">
         <p><strong>{% trans "Username:" %}</strong> {{ user.username }}</p>
         <p><strong>{% trans "Email:" %}</strong> {% if user.email %}{{ user.email }}{% else %}{% trans "Not provided" %}{% endif %}</p>

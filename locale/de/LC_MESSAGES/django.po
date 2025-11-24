@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-24 12:06+0000\n"
+"POT-Creation-Date: 2025-11-24 19:41+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -75,6 +75,10 @@ msgstr ""
 msgid "Login to Get Started"
 msgstr "Melde dich an, um zu beginnen"
 
+#: chat/templates/profile.html:35
+msgid "Your Profile"
+msgstr "Dein Profil"
+
 #: chat/templates/profile.html:37
 msgid "Username:"
 msgstr "Benutzername:"
@@ -95,19 +99,15 @@ msgstr "Beitrittsdatum:"
 msgid "Login to Elite Chat"
 msgstr "Bei Elite Chat anmelden"
 
-#: chat/templates/room.html:125
+#: chat/templates/room.html:158
+msgid "No messages yet. Start the conversation!"
+msgstr "Noch keine Nachrichten. Fang das Gespräch an!"
+
+#: chat/templates/room.html:178
 msgid "(pending approval)"
-msgstr "(Genehmigung ausstehend)"
+msgstr "(wartet auf Genehmigung)"
 
-#: chat/templates/room.html:132
-msgid "Type your message..."
-msgstr "Gib deine Nachricht ein..."
-
-#: chat/templates/room.html:132
-msgid "Press Ctrl+Enter to send"
-msgstr "Drücke Strg+Eingabe zum Senden"
-
-#: chat/templates/room.html:133
+#: chat/templates/room.html:187
 msgid "Send"
 msgstr "Senden"
 
@@ -1354,3 +1354,9 @@ msgstr ""
 #: venv/lib/python3.13/site-packages/django_ckeditor_5/widgets.py:43
 msgid "Check the correct settings.CKEDITOR_5_CONFIGS "
 msgstr ""
+
+#~ msgid "Type your message..."
+#~ msgstr "Gib deine Nachricht ein..."
+
+#~ msgid "Press Ctrl+Enter to send"
+#~ msgstr "Drücke Strg+Eingabe zum Senden"

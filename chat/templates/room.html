@@ -153,8 +153,11 @@
         <h2>{{ room.name }}</h2>
         <p class="room-description">{{ room.description }}</p>
     </div>
-    <div class="messages" id="messages">
-        {% for message in messages %}
+     <div class="messages" id="messages">
+         {% if not messages %}
+             <div class="no-messages">{% trans "No messages yet. Start the conversation!" %}</div>
+         {% endif %}
+         {% for message in messages %}
             <div class="message {% if message.author == user %}own{% else %}other{% endif %} {% if not message.approved and message.author == user %}unapproved{% endif %}">
                 <div class="message-bubble">
                     <div class="message-author">{{ message.author.username }}</div>

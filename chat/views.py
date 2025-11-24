@@ -66,19 +66,17 @@ def room(request, room_id):
                 profile = Profile.objects.get_or_create(user=request.user)[0]
                 approved = profile.auto_approve
                 message = Message.objects.create(room=room, author=request.user, content=content, approved=approved)
-                logger.info("Message created with id: %s", message.id)
                 # Associate images
                 import re
                 image_ids = re.findall(r'/image/(\d+)/', content)
-                logger.info("Found image IDs in content: %s", image_ids)
                 for image_id in image_ids:
                     try:
                         image = Image.objects.get(id=image_id, message__isnull=True)
                         image.message = message
                         image.save()
-                        logger.info("Associated image %s with message %s", image_id, message.id)
                     except Image.DoesNotExist:
-                        logger.warning("Image %s not found or already associated", image_id)
+                        pass
+                print("room: done to associate images")
         return redirect('room', room_id=room.id)
     return render(request, 'room.html', {'room': room, 'messages': messages, 'form': form})
 

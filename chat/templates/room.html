@@ -5,7 +5,7 @@
 {% block title %}{{ room.name }} - Elite Chat{% endblock %}
 
 {% block extra_head %}
-<script src="{% static 'ckeditor5/ckeditor.js' %}"></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/40.2.0/super-build/ckeditor.js"></script>
 <style>
     .room-container {
         max-width: 800px;
@@ -149,9 +149,11 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        ClassicEditor
+        CKEDITOR
             .create( document.querySelector( '#id_content' ), {
-                toolbar: [ 'heading', '|', 'bold', 'italic', '|', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'insertTable', '|', 'undo', 'redo' ],
+                toolbar: {
+                    items: [ 'heading', '|', 'bold', 'italic', 'underline', '|', 'link', 'imageUpload', 'bulletedList', 'numberedList', 'blockQuote', 'codeBlock', 'insertTable', '|', 'undo', 'redo' ]
+                },
                 simpleUpload: {
                     uploadUrl: '/upload_image/',
                 },

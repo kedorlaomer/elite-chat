@@ -87,7 +87,7 @@
         border: 1px solid #ddd;
         border-radius: 4px;
         resize: vertical;
-        min-height: 40px;
+        height: 300px;
     }
     .message-form button {
         padding: 10px 20px;
@@ -133,7 +133,7 @@
         ClassicEditor
             .create( document.querySelector( '#id_content' ), {
                 toolbar: [ 'bold', 'italic', 'underline', 'link' ],
-                height: 100,
+                height: 300,
                 width: '100%',
             } )
             .catch( error => {

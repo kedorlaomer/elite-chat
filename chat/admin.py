@@ -58,15 +58,15 @@ class ImageAdmin(admin.ModelAdmin):
         return format_html('<img src="/image/{}/" width="100" height="100" style="object-fit: cover;" />', obj.id)
     image_preview.short_description = 'Preview'
 
-admin.site.register(Message, MessageAdmin)
-admin.site.register(Membership)
-admin.site.register(Profile)
 class UnapprovedMessageAdmin(MessageAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).filter(approved=False)
 
-admin.site.register(Image, ImageAdmin)
 admin.site.register(UnapprovedMessage, UnapprovedMessageAdmin)
+admin.site.register(Message, MessageAdmin)
+admin.site.register(Membership)
+admin.site.register(Profile)
+admin.site.register(Image, ImageAdmin)
 
 # Unregister the default User admin and register the custom one
 admin.site.unregister(User)

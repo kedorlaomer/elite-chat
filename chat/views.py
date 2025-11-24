@@ -4,6 +4,8 @@ from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.views import LoginView
 from django.contrib import messages
 from django.db import models
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 from .models import Profile, Room, Message
 
 # Create your views here.
@@ -62,3 +64,18 @@ def home(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
     return render(request, 'home.html')
+
+@csrf_exempt
+def upload_image(request):
+    if request.method == 'POST' and request.FILES.get('upload'):
+        file = request.FILES['upload']
+        # Create images directory if not exists
+        import os
+        os.makedirs('static/images', exist_ok=True)
+        path = f'static/images/{file.name}'
+        with open(path, 'wb') as f:
+            for chunk in file.chunks():
+                f.write(chunk)
+        url = request.build_absolute_uri(f'/static/images/{file.name}')
+        return JsonResponse({'url': url})
+    return JsonResponse({'error': 'Invalid request'}, status=400)

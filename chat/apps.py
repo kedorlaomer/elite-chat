@@ -30,7 +30,6 @@ def create_superuser(sender, **kwargs):
                 values[key] = value
 
         if missing_vars:
-            print(f'Superuser not created: Missing environment variables: {", ".join(missing_vars)}')
             return
 
         try:
@@ -39,9 +38,8 @@ def create_superuser(sender, **kwargs):
                 email=values['email'],
                 password=values['password']
             )
-            print(f'Superuser created: {values["username"]}')
         except Exception as e:
-            print(f'Error creating superuser: {e}')
+            pass
 
 
 class ChatConfig(AppConfig):

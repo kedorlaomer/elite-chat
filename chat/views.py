@@ -5,6 +5,7 @@ from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.views import LoginView
 from django.contrib import messages
 from django.db import models
+from django.db.models import Q
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -54,7 +55,7 @@ def room(request, room_id):
     if not room.members.filter(id=request.user.id).exists():
         return redirect('dashboard')  # or error message
     messages = room.message_set.filter(
-        models.Q(approved=True) | models.Q(author=request.user)
+        Q(approved=True) | Q(author=request.user)
     ).order_by('created_at')
     form = MessageForm()
     if request.method == 'POST':

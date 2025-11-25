@@ -18,9 +18,10 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.conf.urls.i18n import i18n_patterns
 from chat.views import set_password, CustomLoginView, dashboard, home, profile, room, upload_image, serve_image, delete_message, approve_message
 
-urlpatterns = [
+urlpatterns = i18n_patterns(
     path('', home, name='home'),
     path('admin/', admin.site.urls),
     path('accounts/login/', CustomLoginView.as_view(), name='login'),
@@ -35,7 +36,7 @@ urlpatterns = [
     path('image/<int:image_id>/', serve_image, name='serve_image'),
     path('ckeditor5/image_upload/', upload_image, name='ckeditor_upload'),
     path('ckeditor5/', include('django_ckeditor_5.urls')),
-]
+)
 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

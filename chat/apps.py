@@ -56,3 +56,6 @@ class ChatConfig(AppConfig):
         User = get_user_model()
         post_save.connect(create_profile, sender=User)
         post_migrate.connect(create_superuser, sender=self)
+        
+        # Import signals to register them
+        from . import signals

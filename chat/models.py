@@ -47,3 +47,4 @@ class Image(models.Model):
     data = models.BinaryField()
     filename = models.CharField(max_length=255)
     content_type = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)

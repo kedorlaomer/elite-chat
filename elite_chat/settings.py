@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_ckeditor_5',
+    'channels',
     'chat',
     'moderation',
 ]
@@ -74,7 +75,13 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'elite_chat.wsgi.application'
+ASGI_APPLICATION = 'elite_chat.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer'
+    }
+}
 
 
 # Database
@@ -84,7 +91,7 @@ import dj_database_url
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}'
+        default=f'postgresql://elite_db_e9z9_user:JmXunwxdPLXw791vOZy2QYjg27i71x7h@dpg-d5592qshg0os739v43eg-a.frankfurt-postgres.render.com/elite_db_e9z9'
     )
 }
 

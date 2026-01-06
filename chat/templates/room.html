@@ -190,9 +190,105 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Scroll to bottom of messages
+        const room_id = {{ room.id }};
+        const currentUser = "{{ user.username }}";
         const messages = document.getElementById('messages');
+        
+        // Scroll to bottom of messages
         messages.scrollTop = messages.scrollHeight;
+        
+        // WebSocket connection
+        const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
+        const ws_path = ws_scheme + "://" + window.location.host + "/ws/room/" + room_id + "/";
+        const socket = new WebSocket(ws_path);
+        
+        socket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            if (data.type === 'message') {
+                addMessage(data.message);
+            }
+        };
+        
+        socket.onclose = function(e) {
+            console.error('Socket closed unexpectedly');
+        };
+        
+        function addMessage(message) {
+            const messagesContainer = document.getElementById('messages');
+            const noMessagesDiv = messagesContainer.querySelector('.no-messages');
+            if (noMessagesDiv) {
+                noMessagesDiv.remove();
+            }
+            
+            // Create a temporary container and load the template
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = `
+                <div class="message ${message.author === currentUser ? 'own' : 'other'} ${!message.approved && message.author === currentUser ? 'unapproved' : ''}">
+                    <div class="message-bubble">
+                        <div class="message-author">${message.author}</div>
+                        <div>${message.content}</div>
+                        <div class="message-time">${new Date(message.created_at).toLocaleTimeString()}</div>
+                        ${message.author === currentUser || '{{ user.is_staff }}' === 'True' ? `
+                            <form method="post" action="{% url 'delete_message' 0 %}".replace('0', message.id) style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="delete-btn" title="Delete message">×</button>
+                            </form>` : ''}
+                        ${!message.approved && '{{ user.is_staff }}' === 'True' ? `
+                            <form method="post" action="{% url 'approve_message' 0 %}".replace('0', message.id) style="float: right;">
+                                {% csrf_token %}
+                                <button type="submit" class="approve-btn" title="Approve message">+</button>
+                            </form>` : ''}
+                        ${!message.approved && message.author === currentUser ? '<div class="pending">(pending approval)</div>' : ''}
+                    </div>
+                </div>
+            `;
+            
+            const messageDiv = tempDiv.firstElementChild;
+            messagesContainer.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            messages.scrollTop = messages.scrollHeight;
+        }
+        
+        // Override form submission to use WebSocket
+        const form = document.querySelector('.message-form');
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Find CKEditor instance by looking for the editable element
+            let messageText = '';
+            const editorElement = document.querySelector('.ck-editor__editable');
+            
+            if (editorElement && editorElement.ckeditorInstance) {
+                // CKEditor 5 instance
+                const editorInstance = editorElement.ckeditorInstance;
+                messageText = editorInstance.getData();
+                
+                if (messageText && messageText.trim()) {
+                    socket.send(JSON.stringify({
+                        'message': messageText
+                    }));
+                    
+                    // Clear editor
+                    editorInstance.setData('');
+                }
+            } else {
+                // Fallback to textarea content
+                const textarea = form.querySelector('textarea[name="content"]');
+                if (textarea) {
+                    messageText = textarea.value;
+                }
+                
+                if (messageText && messageText.trim()) {
+                    socket.send(JSON.stringify({
+                        'message': messageText
+                    }));
+                    
+                    // Clear textarea
+                    textarea.value = '';
+                }
+            }
+        });
     });
 </script>
 {% endblock %}

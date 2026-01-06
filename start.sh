@@ -2,7 +2,7 @@
 
 # Entrypoint script for Elite Chat
 # Requires environment variables for superuser creation
-# Runs migrations, creates superuser, and starts Gunicorn
+# Runs migrations, creates superuser, and starts Daphne (ASGI server)
 
 set -e  # Exit on any error
 
@@ -32,6 +32,6 @@ python manage.py collectstatic --noinput
 echo "Creating superuser..."
 python manage.py createsuperuser
 
-# Start Gunicorn
-echo "Starting Gunicorn..."
-exec gunicorn elite_chat.wsgi:application
+# Start Daphne (ASGI server for WebSockets)
+echo "Starting Daphne..."
+exec daphne elite_chat.asgi:application

@@ -286,8 +286,8 @@
             }
         });
         
-        // Delete message asynchronously
-        function deleteMessage(messageId, buttonElement) {
+        // Make deleteMessage globally available
+        window.deleteMessage = function(messageId, buttonElement) {
             
             fetch('/en/message/' + messageId + '/delete/', {
                 method: 'POST',
@@ -312,8 +312,8 @@
             });
         }
         
-        // Approve message asynchronously
-        function approveMessage(messageId, buttonElement) {
+        // Make approveMessage globally available
+        window.approveMessage = function(messageId, buttonElement) {
             fetch('/en/message/' + messageId + '/approve/', {
                 method: 'POST',
                 headers: {

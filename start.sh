@@ -34,4 +34,4 @@ python manage.py createsuperuser
 
 # Start Daphne (ASGI server for WebSockets)
 echo "Starting Daphne..."
-exec daphne elite_chat.asgi:application
+exec daphne elite_chat.asgi:application --bind 0.0.0.0 --port ${PORT:-8000}

@@ -229,15 +229,9 @@
                         <div>${message.content}</div>
                         <div class="message-time">${new Date(message.created_at).toLocaleTimeString()}</div>
                         ${message.author === currentUser || '{{ user.is_staff|yesno:"true,false" }}' === 'true' ? `
-                            <form method="post" action="/en/message/${message.id}/delete/" style="display:inline;">
-                                {% csrf_token %}
-                                <button type="submit" class="delete-btn" title="Delete message">×</button>
-                            </form>` : ''}
+                            <button class="delete-btn" title="Delete message" onclick="deleteMessage(${message.id}, this)">×</button>` : ''}
                         ${!message.approved && '{{ user.is_staff|yesno:"true,false" }}' === 'true' ? `
-                            <form method="post" action="/en/message/${message.id}/approve/" style="float: right;">
-                                {% csrf_token %}
-                                <button type="submit" class="approve-btn" title="Approve message">+</button>
-                            </form>` : ''}
+                            <button class="approve-btn" title="Approve message" onclick="approveMessage(${message.id}, this)">+</button>` : ''}
                         ${!message.approved && message.author === currentUser ? '<div class="pending">(pending approval)</div>' : ''}
                     </div>
                 </div>
@@ -287,8 +281,84 @@
                     // Clear textarea
                     textarea.value = '';
                 }
+}
+        
+        // Delete message asynchronously
+        function deleteMessage(messageId, buttonElement) {
+            if (!confirm('Are you sure you want to delete this message?')) {
+                return;
             }
-        });
+            
+            fetch('/en/message/' + messageId + '/delete/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: ''
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Remove the message element
+                    const messageElement = buttonElement.closest('.message');
+                    messageElement.remove();
+                } else {
+                    alert('Failed to delete message');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to delete message');
+            });
+        }
+        
+        // Approve message asynchronously
+        function approveMessage(messageId, buttonElement) {
+            fetch('/en/message/' + messageId + '/approve/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: ''
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Remove the approve button and pending text
+                    const messageElement = buttonElement.closest('.message');
+                    const approveButton = messageElement.querySelector('.approve-btn');
+                    const pendingText = messageElement.querySelector('.pending');
+                    
+                    if (approveButton) approveButton.remove();
+                    if (pendingText) pendingText.remove();
+                    
+                    // Remove unapproved class
+                    messageElement.classList.remove('unapproved');
+                } else {
+                    alert('Failed to approve message');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to approve message');
+            });
+        }
+        
+        // Get CSRF token from cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
     });
 </script>
 {% endblock %}

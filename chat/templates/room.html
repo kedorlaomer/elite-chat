@@ -228,13 +228,13 @@
                         <div class="message-author">${message.author}</div>
                         <div>${message.content}</div>
                         <div class="message-time">${new Date(message.created_at).toLocaleTimeString()}</div>
-                        ${message.author === currentUser || '{{ user.is_staff }}' === 'True' ? `
-                            <form method="post" action="{% url 'delete_message' 0 %}".replace('0', message.id) style="display:inline;">
+                        ${message.author === currentUser || '{{ user.is_staff|yesno:"true,false" }}' === 'true' ? `
+                            <form method="post" action="/en/message/${message.id}/delete/" style="display:inline;">
                                 {% csrf_token %}
                                 <button type="submit" class="delete-btn" title="Delete message">×</button>
                             </form>` : ''}
-                        ${!message.approved && '{{ user.is_staff }}' === 'True' ? `
-                            <form method="post" action="{% url 'approve_message' 0 %}".replace('0', message.id) style="float: right;">
+                        ${!message.approved && '{{ user.is_staff|yesno:"true,false" }}' === 'true' ? `
+                            <form method="post" action="/en/message/${message.id}/approve/" style="float: right;">
                                 {% csrf_token %}
                                 <button type="submit" class="approve-btn" title="Approve message">+</button>
                             </form>` : ''}

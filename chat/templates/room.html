@@ -248,6 +248,7 @@
         const form = document.querySelector('.message-form');
         form.addEventListener('submit', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             
             // Find CKEditor instance by looking for the editable element
             let messageText = '';
@@ -359,6 +360,33 @@
             }
             return cookieValue;
         }
+        
+        // Handle existing delete/approve buttons with event delegation
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('delete-btn')) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Handle form-based delete buttons
+                const form = e.target.closest('form');
+                if (form) {
+                    const messageId = form.action.match(/\/(\d+)\/delete\//)[1];
+                    deleteMessage(messageId, e.target);
+                }
+            }
+            
+            if (e.target.classList.contains('approve-btn')) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Handle form-based approve buttons
+                const form = e.target.closest('form');
+                if (form) {
+                    const messageId = form.action.match(/\/(\d+)\/approve\//)[1];
+                    approveMessage(messageId, e.target);
+                }
+            }
+        });
     });
 </script>
 {% endblock %}

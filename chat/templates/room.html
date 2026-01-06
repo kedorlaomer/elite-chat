@@ -247,8 +247,10 @@
         // Override form submission to use WebSocket
         const form = document.querySelector('.message-form');
         form.addEventListener('submit', function(e) {
+            console.log('Form submit intercepted');
             e.preventDefault();
             e.stopPropagation();
+            return false;
             
             // Find CKEditor instance by looking for the editable element
             let messageText = '';
@@ -361,30 +363,70 @@
             return cookieValue;
         }
         
-        // Handle existing delete/approve buttons with event delegation
+        // Handle all delete/approve buttons (existing and dynamic)
         document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('delete-btn')) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Handle form-based delete buttons
-                const form = e.target.closest('form');
-                if (form) {
-                    const messageId = form.action.match(/\/(\d+)\/delete\//)[1];
-                    deleteMessage(messageId, e.target);
+            // Check for delete button
+            if (e.target.matches('.delete-btn, .delete-btn *')) {
+                const button = e.target.closest('.delete-btn');
+                if (button) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Handle both form and async buttons
+                    const form = button.closest('form');
+                    if (form) {
+                        const match = form.action.match(/\/(\d+)\/delete\//);
+                        if (match) {
+                            deleteMessage(match[1], button);
+                            return false;
+                        }
+                    } else if (button.onclick) {
+                        return false;
+                    }
                 }
             }
             
-            if (e.target.classList.contains('approve-btn')) {
+            // Check for approve button
+            if (e.target.matches('.approve-btn, .approve-btn *')) {
+                const button = e.target.closest('.approve-btn');
+                if (button) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Handle both form and async buttons
+                    const form = button.closest('form');
+                    if (form) {
+                        const match = form.action.match(/\/(\d+)\/approve\//);
+                        if (match) {
+                            approveMessage(match[1], button);
+                            return false;
+                        }
+                    } else if (button.onclick) {
+                        return false;
+                    }
+                }
+            }
+        });
+        
+        // Also intercept form submissions for delete/approve
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+            if (form.action.includes('/delete/') || form.action.includes('/approve/')) {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                // Handle form-based approve buttons
-                const form = e.target.closest('form');
-                if (form) {
-                    const messageId = form.action.match(/\/(\d+)\/approve\//)[1];
-                    approveMessage(messageId, e.target);
+                const deleteMatch = form.action.match(/\/(\d+)\/delete\//);
+                const approveMatch = form.action.match(/\/(\d+)\/approve\//);
+                
+                if (deleteMatch) {
+                    const button = form.querySelector('.delete-btn');
+                    deleteMessage(deleteMatch[1], button);
+                } else if (approveMatch) {
+                    const button = form.querySelector('.approve-btn');
+                    approveMessage(approveMatch[1], button);
                 }
+                
+                return false;
             }
         });
     });

@@ -227,7 +227,7 @@
                     <div class="message-bubble">
                         <div class="message-author">${message.author}</div>
                         <div>${message.content}</div>
-                        <div class="message-time">${new Date(message.created_at).toLocaleTimeString()}</div>
+                        <div class="message-time">${formatMessageTime(message.created_at)}</div>
                         ${message.author === currentUser || '{{ user.is_staff|yesno:"true,false" }}' === 'true' ? `
                             <button class="delete-btn" title="Delete message" onclick="deleteMessage(${message.id}, this)">×</button>` : ''}
                         ${!message.approved && '{{ user.is_staff|yesno:"true,false" }}' === 'true' ? `
@@ -342,6 +342,26 @@
                 console.error('Error:', error);
                 alert('Failed to approve message');
             });
+        }
+        
+        // Format message time with date/year logic
+        function formatMessageTime(timestamp) {
+            const messageDate = new Date(timestamp);
+            const now = new Date();
+            
+            const isToday = messageDate.toDateString() === now.toDateString();
+            const isCurrentYear = messageDate.getFullYear() === now.getFullYear();
+            
+            if (isToday) {
+                // Just show time for today's messages
+                return messageDate.toLocaleTimeString();
+            } else if (isCurrentYear) {
+                // Show date and time for same year
+                return messageDate.toLocaleDateString() + ' ' + messageDate.toLocaleTimeString();
+            } else {
+                // Show date, time, and year for different years
+                return messageDate.toLocaleDateString() + ' ' + messageDate.toLocaleTimeString() + ' ' + messageDate.getFullYear();
+            }
         }
         
         // Get CSRF token from cookies

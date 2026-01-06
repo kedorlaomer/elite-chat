@@ -288,9 +288,6 @@
         
         // Delete message asynchronously
         function deleteMessage(messageId, buttonElement) {
-            if (!confirm('Are you sure you want to delete this message?')) {
-                return;
-            }
             
             fetch('/en/message/' + messageId + '/delete/', {
                 method: 'POST',

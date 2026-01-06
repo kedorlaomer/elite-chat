@@ -28,6 +28,8 @@ DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = ['localhost', 'elite-chat.onrender.com']
 
+CSRF_TRUSTED_ORIGINS = ['https://elite-chat.onrender.com']
+
 
 # Application definition
 

@@ -414,9 +414,8 @@
             })
             .then(response => {
                 if (response.ok) {
-                    // Remove the message element
-                    const messageElement = buttonElement.closest('.message');
-                    messageElement.remove();
+                    // Looked up by id: a poll may already have removed the button
+                    removeMessage(messageId);
                 } else {
                     alert('Failed to delete message');
                 }
@@ -438,8 +437,10 @@
                 body: ''
             })
             .then(response => {
+                // Looked up by id: a poll may already have applied the approval
+                const messageElement = findMessage(messageId);
                 if (response.ok) {
-                    markApproved(buttonElement.closest('.message'));
+                    if (messageElement) markApproved(messageElement);
                 } else {
                     alert('Failed to approve message');
                 }

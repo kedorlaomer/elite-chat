@@ -220,6 +220,51 @@ class TombstoneTests(PollingTestCase):
         self.assertFalse(DeletedMessage.objects.filter(id=stale.id).exists())
 
 
+class ServeImageTests(PollingTestCase):
+    def make_image(self, **kwargs):
+        image = Image.objects.create(data=b'x', filename='a.png', content_type='image/png')
+        if kwargs:
+            image.message = Message.objects.create(room=self.room, author=self.bob, content='m', **kwargs)
+            image.save()
+        return image
+
+    def get(self, image):
+        return self.client.get(reverse('serve_image', args=[image.id]))
+
+    def test_anonymous_redirected_to_login(self):
+        for image in (self.make_image(), self.make_image(approved=True)):
+            response = self.get(image)
+            self.assertEqual(response.status_code, 302)
+            self.assertIn('/accounts/login/', response['Location'])
+
+    def test_member_sees_approved_image(self):
+        self.client.force_login(self.alice)
+        response = self.get(self.make_image(approved=True))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b'x')
+
+    def test_response_not_publicly_cacheable(self):
+        self.client.force_login(self.alice)
+        self.assertIn('private', self.get(self.make_image(approved=True))['Cache-Control'])
+
+    def test_non_member_denied(self):
+        self.client.force_login(self.outsider)
+        self.assertEqual(self.get(self.make_image(approved=True)).status_code, 404)
+
+    def test_unapproved_hidden_from_other_members(self):
+        image = self.make_image(approved=False)
+        self.client.force_login(self.alice)
+        self.assertEqual(self.get(image).status_code, 404)
+        self.client.force_login(self.bob)
+        self.assertEqual(self.get(image).status_code, 200)
+        self.client.force_login(self.staff)
+        self.assertEqual(self.get(image).status_code, 200)
+
+    def test_unattached_image_needs_login_only(self):
+        self.client.force_login(self.outsider)
+        self.assertEqual(self.get(self.make_image()).status_code, 200)
+
+
 @override_settings(MAX_UPLOAD_BYTES=10)
 class UploadTests(PollingTestCase):
     url_name = 'upload_image'

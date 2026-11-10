@@ -8,7 +8,7 @@ from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.views import LoginView
 from django.contrib import messages
 from django.db.models import Q
-from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
+from django.http import Http404, JsonResponse, HttpResponse, HttpResponseForbidden
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
@@ -186,11 +186,18 @@ def upload_image(request):
         return JsonResponse({'url': url})
     return JsonResponse({'error': {'message': 'Invalid request'}}, status=400)
 
+@login_required
 def serve_image(request, image_id):
     image = get_object_or_404(Image, id=image_id)
+    user = request.user
+    if image.message_id and not user.is_staff:
+        message = image.message
+        is_member = message.room.members.filter(id=user.id).exists()
+        if not is_member or not (message.approved or message.author_id == user.id):
+            raise Http404
     response = HttpResponse(image.data, content_type=image.content_type)
-    # Images never change once uploaded; let the CDN and browsers keep them
-    response['Cache-Control'] = 'public, max-age=31536000, immutable'
+    # Access depends on the viewer, so a shared cache or CDN must never store it
+    response['Cache-Control'] = 'private, max-age=86400'
     return response
 
 @require_POST

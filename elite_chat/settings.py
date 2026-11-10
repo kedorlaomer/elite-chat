@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -20,15 +22,32 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-yw&h009yit7+cadz@^_07hj0r&@b)e(j$bi!89-zgtijog0=ka'
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = ['localhost', 'elite-chat.onrender.com']
+# SECURITY WARNING: keep the secret key used in production secret!
+# Only DEBUG runs may fall back to an insecure development key.
+SECRET_KEY = os.environ.get('SECRET_KEY') or (
+    'django-insecure-local-development-only' if DEBUG else None
+)
+if not SECRET_KEY:
+    raise ImproperlyConfigured('SECRET_KEY environment variable is required')
 
-CSRF_TRUSTED_ORIGINS = ['https://elite-chat.onrender.com']
+# Comma-separated, e.g. "elite-chat.vercel.app,.example.com"
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()]
+
+# Vercel sets these for every deployment (production and preview URLs)
+for _var in ('VERCEL_URL', 'VERCEL_BRANCH_URL', 'VERCEL_PROJECT_PRODUCTION_URL'):
+    if os.environ.get(_var):
+        ALLOWED_HOSTS.append(os.environ[_var])
+
+CSRF_TRUSTED_ORIGINS = [
+    f'https://*{h}' if h.startswith('.') else f'https://{h}'
+    for h in ALLOWED_HOSTS if h not in ('localhost', '127.0.0.1')
+]
+
+# Vercel terminates TLS in front of the function
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # Application definition
@@ -41,7 +60,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_ckeditor_5',
-    'channels',
     'chat',
     'moderation',
 ]
@@ -77,13 +95,14 @@ TEMPLATES = [
     },
 ]
 
-ASGI_APPLICATION = 'elite_chat.asgi.application'
+WSGI_APPLICATION = 'elite_chat.wsgi.application'
 
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer'
-    }
-}
+# Milliseconds between message polls in a visible room tab; hidden tabs back off
+CHAT_POLL_INTERVAL_MS = int(os.environ.get('CHAT_POLL_INTERVAL_MS', '5000'))
+CHAT_POLL_HIDDEN_INTERVAL_MS = int(os.environ.get('CHAT_POLL_HIDDEN_INTERVAL_MS', '30000'))
+
+# Vercel rejects function request bodies above 4.5 MB
+MAX_UPLOAD_BYTES = 4 * 1024 * 1024
 
 
 # Database
@@ -91,9 +110,13 @@ CHANNEL_LAYERS = {
 
 import dj_database_url
 
+# Serverless instances come and go, so don't hold connections open between
+# requests; point DATABASE_URL at a pooled endpoint (Neon's "-pooler" host).
 DATABASES = {
     'default': dj_database_url.config(
-        default=f'postgresql://elite_db_e9z9_user:JmXunwxdPLXw791vOZy2QYjg27i71x7h@dpg-d5592qshg0os739v43eg-a.frankfurt-postgres.render.com/elite_db_e9z9'
+        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
+        conn_max_age=0,
+        conn_health_checks=True,
     )
 }
 
@@ -128,7 +151,17 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    # Plain storage: static/ckeditor5/ckeditor.js references a source map that
+    # isn't shipped, which manifest storage rejects. Vercel serves STATIC_ROOT
+    # from its CDN; WhiteNoise serves it for local gunicorn runs.
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    },
+}
 
 CKEDITOR_5_UPLOAD_URL = '/upload_image/'
 

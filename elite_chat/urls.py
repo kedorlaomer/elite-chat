@@ -19,7 +19,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.conf.urls.i18n import i18n_patterns
-from chat.views import set_password, CustomLoginView, dashboard, home, profile, room, upload_image, serve_image, delete_message, approve_message
+from chat.views import set_password, CustomLoginView, dashboard, home, profile, room, room_messages, upload_image, serve_image, delete_message, approve_message
 
 urlpatterns = i18n_patterns(
     path('', home, name='home'),
@@ -30,6 +30,7 @@ urlpatterns = i18n_patterns(
     path('set_password/', set_password, name='set_password'),
     path('dashboard/', dashboard, name='dashboard'),
     path('room/<int:room_id>/', room, name='room'),
+    path('room/<int:room_id>/messages/', room_messages, name='room_messages'),
     path('message/<int:message_id>/delete/', delete_message, name='delete_message'),
     path('message/<int:message_id>/approve/', approve_message, name='approve_message'),
     path('upload_image/', upload_image, name='upload_image'),

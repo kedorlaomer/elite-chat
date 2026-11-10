@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils import timezone
 from chat.models import Message
 from .models import UnapprovedMessage, AllMessage
 
@@ -13,7 +14,7 @@ class UnapprovedMessageAdmin(admin.ModelAdmin):
         return super().get_queryset(request).filter(approved=False)
 
     def approve_messages(self, request, queryset):
-        updated = queryset.update(approved=True)
+        updated = queryset.update(approved=True, updated_at=timezone.now())
         self.message_user(request, f'{updated} messages approved.')
     approve_messages.short_description = "Approve selected messages"
 
@@ -42,7 +43,7 @@ class AllMessageAdmin(admin.ModelAdmin):
     ordering = ['-created_at']
 
     def approve_messages(self, request, queryset):
-        updated = queryset.update(approved=True)
+        updated = queryset.update(approved=True, updated_at=timezone.now())
         self.message_user(request, f'{updated} messages approved.')
     approve_messages.short_description = "Approve selected messages"
 

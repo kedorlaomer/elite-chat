@@ -2,7 +2,8 @@
 
 # Entrypoint script for Elite Chat
 # Requires environment variables for superuser creation
-# Runs migrations, creates superuser, and starts Daphne (ASGI server)
+# Runs migrations, creates superuser, and starts Gunicorn (WSGI server)
+# Not used on Vercel, which builds and serves the app itself (see README)
 
 set -e  # Exit on any error
 
@@ -32,6 +33,6 @@ python manage.py collectstatic --noinput
 echo "Creating superuser..."
 python manage.py createsuperuser
 
-# Start Daphne (ASGI server for WebSockets)
-echo "Starting Daphne..."
-exec daphne elite_chat.asgi:application --bind 0.0.0.0 --port ${PORT:-8000}
+# Start Gunicorn
+echo "Starting Gunicorn..."
+exec gunicorn elite_chat.wsgi:application --bind 0.0.0.0:${PORT:-8000}

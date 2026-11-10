@@ -1,11 +1,12 @@
 from django.contrib import admin
+from django.utils import timezone
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from django.utils.html import format_html
 from .models import Room, Message, Membership, Profile, Image
 
 def approve_messages(modeladmin, request, queryset):
-    updated = queryset.update(approved=True)
+    updated = queryset.update(approved=True, updated_at=timezone.now())
     modeladmin.message_user(request, f'{updated} messages approved.')
 
 approve_messages.short_description = "Approve selected messages"

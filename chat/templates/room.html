@@ -156,7 +156,7 @@
              <div class="no-messages">{% trans "No messages yet. Start the conversation!" %}</div>
          {% endif %}
          {% for message in messages %}
-            <div class="message {% if message.author == user %}own{% else %}other{% endif %} {% if not message.approved and message.author == user %}unapproved{% endif %}">
+            <div class="message {% if message.author == user %}own{% else %}other{% endif %} {% if not message.approved and message.author == user %}unapproved{% endif %}" data-message-id="{{ message.id }}" data-approved="{{ message.approved|yesno:'true,false' }}">
                 <div class="message-bubble">
                     <div class="message-author">{{ message.author.username }}</div>
                      <div>{{ message.content|safe }}</div>
@@ -186,114 +186,225 @@
     </form>
 </div>
 
+{{ poll_cursor|json_script:"poll-cursor" }}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const room_id = {{ room.id }};
-        const currentUser = "{{ user.username }}";
+        const currentUser = "{{ user.username|escapejs }}";
+        const isStaff = {{ user.is_staff|yesno:"true,false" }};
+        const messagesUrl = "{% url 'room_messages' room.id %}";
+        // Built from a placeholder id so the language prefix (/en/, /de/, /he/) stays correct
+        const deleteUrlTemplate = "{% url 'delete_message' 0 %}";
+        const approveUrlTemplate = "{% url 'approve_message' 0 %}";
+        const pendingText = "{% trans '(pending approval)' %}";
+        const pollIntervalMs = {{ poll_interval_ms }};
+        const pollHiddenIntervalMs = {{ poll_hidden_interval_ms }};
+        let pollCursor = JSON.parse(document.getElementById('poll-cursor').textContent);
         const messages = document.getElementById('messages');
-        
+
+        function messageUrl(template, messageId) {
+            return template.replace('/0/', '/' + messageId + '/');
+        }
+
         // Scroll to bottom of messages
         messages.scrollTop = messages.scrollHeight;
-        
+
         // Convert existing message times to use our formatting
         document.querySelectorAll('.message-time[data-timestamp]').forEach(function(element) {
             const timestamp = element.getAttribute('data-timestamp');
             element.textContent = formatMessageTime(timestamp);
         });
-        
-        // WebSocket connection
-        const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
-        const ws_path = ws_scheme + "://" + window.location.host + "/ws/room/" + room_id + "/";
-        const socket = new WebSocket(ws_path);
-        
-        socket.onmessage = function(e) {
-            const data = JSON.parse(e.data);
-            if (data.type === 'message') {
-                addMessage(data.message);
-            }
-        };
-        
-        socket.onclose = function(e) {
-            console.error('Socket closed unexpectedly');
-        };
-        
-        function addMessage(message) {
-            const messagesContainer = document.getElementById('messages');
-            const noMessagesDiv = messagesContainer.querySelector('.no-messages');
-            if (noMessagesDiv) {
-                noMessagesDiv.remove();
-            }
-            
-            // Create a temporary container and load the template
+
+        function findMessage(messageId) {
+            return messages.querySelector('.message[data-message-id="' + messageId + '"]');
+        }
+
+        function isNearBottom() {
+            return window.innerHeight + window.scrollY >= document.body.scrollHeight - 100;
+        }
+
+        function scrollToBottom() {
+            messages.scrollTop = messages.scrollHeight;
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+
+        function renderMessage(message) {
+            const own = message.author === currentUser;
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = `
-                <div class="message ${message.author === currentUser ? 'own' : 'other'} ${!message.approved && message.author === currentUser ? 'unapproved' : ''}">
+                <div class="message ${own ? 'own' : 'other'} ${!message.approved && own ? 'unapproved' : ''}" data-message-id="${message.id}" data-approved="${message.approved}">
                     <div class="message-bubble">
-                        <div class="message-author">${message.author}</div>
+                        <div class="message-author"></div>
                         <div>${message.content}</div>
                         <div class="message-time">${formatMessageTime(message.created_at)}</div>
-                        ${message.author === currentUser || '{{ user.is_staff|yesno:"true,false" }}' === 'true' ? `
+                        ${own || isStaff ? `
                             <button class="delete-btn" title="Delete message" onclick="deleteMessage(${message.id}, this)">×</button>` : ''}
-                        ${!message.approved && '{{ user.is_staff|yesno:"true,false" }}' === 'true' ? `
+                        ${!message.approved && isStaff ? `
                             <button class="approve-btn" title="Approve message" onclick="approveMessage(${message.id}, this)">+</button>` : ''}
-                        ${!message.approved && message.author === currentUser ? '<div class="pending">(pending approval)</div>' : ''}
+                        ${!message.approved && own ? '<div class="pending"></div>' : ''}
                     </div>
                 </div>
             `;
-            
             const messageDiv = tempDiv.firstElementChild;
-            messagesContainer.appendChild(messageDiv);
-            
-            // Scroll to bottom
-            messages.scrollTop = messages.scrollHeight;
+            messageDiv.querySelector('.message-author').textContent = message.author;
+            const pending = messageDiv.querySelector('.pending');
+            if (pending) pending.textContent = pendingText;
+            return messageDiv;
         }
-        
-        // Override form submission to use WebSocket
-        const form = document.querySelector('.message-form');
-        form.addEventListener('submit', function(e) {
-            console.log('Form submit intercepted');
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // Find CKEditor instance by looking for the editable element
-            let messageText = '';
-            const editorElement = document.querySelector('.ck-editor__editable');
-            
-            if (editorElement && editorElement.ckeditorInstance) {
-                // CKEditor 5 instance
-                const editorInstance = editorElement.ckeditorInstance;
-                messageText = editorInstance.getData();
-                
-                if (messageText && messageText.trim()) {
-                    socket.send(JSON.stringify({
-                        'message': messageText
-                    }));
-                    
-                    // Clear editor
-                    editorInstance.setData('');
+
+        function markApproved(messageElement) {
+            messageElement.dataset.approved = 'true';
+            messageElement.classList.remove('unapproved');
+            messageElement.querySelectorAll('.approve-btn, .pending').forEach(function(el) {
+                (el.closest('form') || el).remove();
+            });
+        }
+
+        // Insert a new message or bring an existing one up to date
+        function upsertMessage(message) {
+            const existing = findMessage(message.id);
+            if (existing) {
+                if (message.approved && existing.dataset.approved !== 'true') {
+                    markApproved(existing);
                 }
-            } else {
-                // Fallback to textarea content
-                const textarea = form.querySelector('textarea[name="content"]');
-                if (textarea) {
-                    messageText = textarea.value;
+                return;
+            }
+            const noMessagesDiv = messages.querySelector('.no-messages');
+            if (noMessagesDiv) {
+                noMessagesDiv.remove();
+            }
+            const stickToBottom = isNearBottom() || message.author === currentUser;
+            const messageDiv = renderMessage(message);
+            // Keep chronological order even if polls deliver out of order
+            const later = Array.from(messages.querySelectorAll('.message[data-message-id]'))
+                .find(el => Number(el.dataset.messageId) > message.id);
+            messages.insertBefore(messageDiv, later || null);
+            if (stickToBottom) {
+                scrollToBottom();
+            }
+        }
+
+        function removeMessage(messageId) {
+            const element = findMessage(messageId);
+            if (element) {
+                element.remove();
+            }
+        }
+
+        // Polling for messages created, changed or deleted by others
+        let pollTimer = null;
+        let pollInFlight = false;
+        let failures = 0;
+
+        function scheduleNextPoll() {
+            clearTimeout(pollTimer);
+            let delay = document.hidden ? pollHiddenIntervalMs : pollIntervalMs;
+            if (failures > 0) {
+                delay = Math.min(delay * Math.pow(2, failures), 60000);
+            }
+            pollTimer = setTimeout(poll, delay);
+        }
+
+        function poll() {
+            if (pollInFlight) return;
+            pollInFlight = true;
+            fetch(messagesUrl + '?since=' + encodeURIComponent(pollCursor), {
+                headers: {'Accept': 'application/json'},
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                if (response.status === 403 || response.redirected) {
+                    // Logged out or removed from the room: a reload shows the right page
+                    window.location.reload();
+                    throw new Error('Not allowed to poll room');
                 }
-                
-                if (messageText && messageText.trim()) {
-                    socket.send(JSON.stringify({
-                        'message': messageText
-                    }));
-                    
-                    // Clear textarea
-                    textarea.value = '';
-                }
+                if (!response.ok) throw new Error('Poll failed: ' + response.status);
+                return response.json();
+            })
+            .then(data => {
+                data.messages.forEach(upsertMessage);
+                data.deleted.forEach(removeMessage);
+                pollCursor = data.cursor;
+                failures = 0;
+            })
+            .catch(error => {
+                console.error(error);
+                failures++;
+            })
+            .finally(() => {
+                pollInFlight = false;
+                scheduleNextPoll();
+            });
+        }
+
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                // Catch up immediately when the tab comes back
+                failures = 0;
+                clearTimeout(pollTimer);
+                poll();
             }
         });
-        
+
+        scheduleNextPoll();
+
+        function sendMessage(messageText) {
+            const body = new URLSearchParams();
+            body.append('content', messageText);
+            return fetch(messagesUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                credentials: 'same-origin',
+                body: body
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Send failed: ' + response.status);
+                return response.json();
+            })
+            .then(data => upsertMessage(data.message));
+        }
+
+        // Override form submission to post asynchronously
+        const form = document.querySelector('.message-form');
+        const sendButton = form.querySelector('button[type="submit"]');
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Find CKEditor instance by looking for the editable element
+            const editorElement = document.querySelector('.ck-editor__editable');
+            const editorInstance = editorElement && editorElement.ckeditorInstance;
+            const textarea = form.querySelector('textarea[name="content"]');
+            const messageText = editorInstance ? editorInstance.getData() : (textarea ? textarea.value : '');
+
+            if (!messageText || !messageText.trim()) {
+                return;
+            }
+
+            sendButton.disabled = true;
+            sendMessage(messageText)
+            .then(() => {
+                // Clear the editor only once the server has the message
+                if (editorInstance) {
+                    editorInstance.setData('');
+                } else if (textarea) {
+                    textarea.value = '';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to send message');
+            })
+            .finally(() => {
+                sendButton.disabled = false;
+            });
+        });
+
         // Make deleteMessage globally available
         window.deleteMessage = function(messageId, buttonElement) {
-            
-            fetch('/en/message/' + messageId + '/delete/', {
+            fetch(messageUrl(deleteUrlTemplate, messageId), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -315,10 +426,10 @@
                 alert('Failed to delete message');
             });
         }
-        
+
         // Make approveMessage globally available
         window.approveMessage = function(messageId, buttonElement) {
-            fetch('/en/message/' + messageId + '/approve/', {
+            fetch(messageUrl(approveUrlTemplate, messageId), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -328,16 +439,7 @@
             })
             .then(response => {
                 if (response.ok) {
-                    // Remove the approve button and pending text
-                    const messageElement = buttonElement.closest('.message');
-                    const approveButton = messageElement.querySelector('.approve-btn');
-                    const pendingText = messageElement.querySelector('.pending');
-                    
-                    if (approveButton) approveButton.remove();
-                    if (pendingText) pendingText.remove();
-                    
-                    // Remove unapproved class
-                    messageElement.classList.remove('unapproved');
+                    markApproved(buttonElement.closest('.message'));
                 } else {
                     alert('Failed to approve message');
                 }
@@ -347,15 +449,15 @@
                 alert('Failed to approve message');
             });
         }
-        
+
         // Format message time with date/year logic
         function formatMessageTime(timestamp) {
             const messageDate = new Date(timestamp);
             const now = new Date();
-            
+
             const isToday = messageDate.toDateString() === now.toDateString();
             const isCurrentYear = messageDate.getFullYear() === now.getFullYear();
-            
+
             if (isToday) {
                 // Just show time for today's messages
                 return messageDate.toLocaleTimeString();
@@ -367,7 +469,7 @@
                 return messageDate.toLocaleDateString() + ' ' + messageDate.toLocaleTimeString() + ' ' + messageDate.getFullYear();
             }
         }
-        
+
         // Get CSRF token from cookies
         function getCookie(name) {
             let cookieValue = null;
@@ -383,77 +485,22 @@
             }
             return cookieValue;
         }
-        
-        // Handle all delete/approve buttons (existing and dynamic)
-        document.addEventListener('click', function(e) {
-            console.log('Click detected on:', e.target, 'Classes:', e.target.className);
-            
-            // Check for delete button
-            if (e.target.matches('.delete-btn, .delete-btn *')) {
-                const button = e.target.closest('.delete-btn');
-                console.log('Delete button found:', button);
-                if (button) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    // Handle both form and async buttons
-                    const form = button.closest('form');
-                    console.log('Form found:', form);
-                    if (form) {
-                        console.log('Form action:', form.action);
-                        const match = form.action.match(/\/(\d+)\/delete\//);
-                        console.log('Match result:', match);
-                        if (match) {
-                            deleteMessage(match[1], button);
-                            return false;
-                        }
-                    } else if (button.onclick) {
-                        return false;
-                    }
-                }
-            }
-            
-            // Check for approve button
-            if (e.target.matches('.approve-btn, .approve-btn *')) {
-                const button = e.target.closest('.approve-btn');
-                if (button) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    // Handle both form and async buttons
-                    const form = button.closest('form');
-                    if (form) {
-                        const match = form.action.match(/\/(\d+)\/approve\//);
-                        if (match) {
-                            approveMessage(match[1], button);
-                            return false;
-                        }
-                    } else if (button.onclick) {
-                        return false;
-                    }
-                }
-            }
-        });
-        
-        // Also intercept form submissions for delete/approve
+
+        // Server-rendered delete/approve buttons sit in forms; handle them asynchronously
         document.addEventListener('submit', function(e) {
-            const form = e.target;
-            if (form.action.includes('/delete/') || form.action.includes('/approve/')) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                const deleteMatch = form.action.match(/\/(\d+)\/delete\//);
-                const approveMatch = form.action.match(/\/(\d+)\/approve\//);
-                
-                if (deleteMatch) {
-                    const button = form.querySelector('.delete-btn');
-                    deleteMessage(deleteMatch[1], button);
-                } else if (approveMatch) {
-                    const button = form.querySelector('.approve-btn');
-                    approveMessage(approveMatch[1], button);
-                }
-                
-                return false;
+            const actionForm = e.target;
+            const button = actionForm.querySelector('.delete-btn, .approve-btn');
+            const messageElement = actionForm.closest('.message');
+            if (!button || !messageElement) {
+                return;
+            }
+            e.preventDefault();
+            e.stopPropagation();
+            const messageId = messageElement.dataset.messageId;
+            if (button.classList.contains('delete-btn')) {
+                deleteMessage(messageId, button);
+            } else {
+                approveMessage(messageId, button);
             }
         });
     });
